@@ -1,0 +1,38 @@
+[
+  {
+    "store": "Citilink",
+    "url": "https://www.citilink.ru/search/?text=",
+    "selector": "",
+    "class_prod_price": "span.ProductCardVerticalPrice__price-current_current-price",
+    "class_prod_name": "ProductCardVertical__name",
+    "link_url": "ProductCardVertical__name",
+    "base_url": "https://www.citilink.ru/product"
+  },
+  {
+    "store": "Technopark",
+    "url": "https://www.technopark.ru/search/?withContent=true&strategy=vectors_extended,zero_queries&q=",
+    "selector": "",
+    "class_prod_price": "div.product-prices__price",
+    "class_prod_name": "product-card-big__name",
+    "link_url": "product-card-link--cover-container",
+    "base_url": "https://www.technopark.ru"
+  },
+  {
+    "store": "BigGeek",
+    "url": "https://sort.diginetica.net/search?apiKey=BGN2877Z5Z&strategy=advanced,zero_queries&fullData=true&withCorrection=true&withFacets=true&treeFacets=true&regionId=global&useCategoryPrediction=false&size=20&offset=40&showUnavailable=false&unavailableMultiplier=0.2&preview=false&withSku=true&sort=DEFAULT&st=",
+    "selector": "products",
+    "class_prod_price": "price",
+    "class_prod_name": "name",
+    "link_url": "link_url",
+    "base_url": "https://biggeek.ru/"
+  },
+  {
+    "store": "Notik",
+    "url": "https://www.notik.ru/search.htm?type=all&find=",
+    "selector": "a.add2cartSmall",
+    "class_prod_price": "ecprice",
+    "class_prod_name": "ecname",
+    "link_url": ".available.size8.instock + a",
+    "base_url": "https://www.notik.ru/search.htm"
+  }
+]

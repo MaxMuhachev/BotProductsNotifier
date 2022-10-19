@@ -1,7 +1,5 @@
 # Здесь хранятся пользовательские данные.
 # Т.к. это словарь в памяти, то при перезапуске он очистится
-class UserProduct:
-    user_product_data = {}
 
 CONFIG_STORE_FILE = "config/store.json"
 

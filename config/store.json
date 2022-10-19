@@ -19,7 +19,7 @@
   },
   {
     "store": "BigGeek",
-    "url": "https://sort.diginetica.net/search?apiKey=BGN2877Z5Z&strategy=advanced,zero_queries&fullData=true&withCorrection=true&withFacets=true&treeFacets=true&regionId=global&useCategoryPrediction=false&size=20&offset=40&showUnavailable=false&unavailableMultiplier=0.2&preview=false&withSku=true&sort=DEFAULT&st=",
+    "url": "https://sort.diginetica.net/search?apiKey=BGN2877Z5Z&strategy=advanced,zero_queries&fullData=true&withCorrection=true&withFacets=true&treeFacets=true&regionId=global&useCategoryPrediction=false&size=20&offset=0&showUnavailable=false&unavailableMultiplier=0.2&preview=false&withSku=true&sort=DEFAULT&st=",
     "selector": "products",
     "class_prod_price": "price",
     "class_prod_name": "name",

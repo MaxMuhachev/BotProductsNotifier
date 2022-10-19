@@ -23,6 +23,7 @@ from utils.messages import UNKNOWN
 
 class Products(StatesGroup):
     product_name = State()
+    product_name_price_now = State()
     after_hours = State()
     low_price = State()
 
@@ -32,14 +33,19 @@ async def cmd_start_watch(message: types.Message):
     await Products.product_name.set()
 
 
+async def cmd_now_price(message: types.Message):
+    await message.answer("Введите <b>название</b> товара цены которого хотите получить", parse_mode=types.ParseMode.HTML)
+    await Products.product_name_price_now.set()
+
+
 async def cmd_change(message: types.Message):
     products = await get_products_by_chat_id(config, message.chat.id)
     if len(products):
-        await message.answer("<b>Выберите продукт</b> для изменения",
+        await message.answer("<b>Выберите товар</b> для изменения",
                              reply_markup=get_keyboard_change_watch(products),
                              parse_mode=types.ParseMode.HTML)
     else:
-        await message.answer("Сейчас нет отслеживаемых продуктов",
+        await message.answer("Сейчас нет отслеживаемых товаров",
                              parse_mode=types.ParseMode.HTML)
 
 
@@ -50,7 +56,7 @@ async def cmd_stop(message: types.Message):
                              reply_markup=get_keyboard_stop_watch(products),
                              parse_mode=types.ParseMode.HTML)
     else:
-        await message.answer("Сейчас нет отслеживаемых продуктов",
+        await message.answer("Сейчас нет отслеживаемых товаров",
                              parse_mode=types.ParseMode.HTML)
 
 
@@ -70,23 +76,44 @@ async def set_product_name(message: types.Message, state: FSMContext):
     await state.finish()
 
 
+@dp.message_handler(state=Products.product_name_price_now)
+async def set_product_name(message: types.Message, state: FSMContext):
+    productMessage = message.text.lower().translate(str.maketrans('', '', string.punctuation))
+    productDb = await get_product_py_name(config, productMessage)
+    if productDb is None:
+        productDb = add_product(config, productMessage)
+    update_date_updated(config, productDb[0])
+    mess = await get_product_prices_now([{0: str(message.chat.id), 1: str(productDb[0]), 2: productDb[1]}])
+
+    await message.answer(
+        "Текущие цены в магазинах: \n\n" + mess,
+        parse_mode=types.ParseMode.HTML)
+    await state.finish()
+
+
 @dp.message_handler(state=Products.after_hours)
 async def set_notif_every_hour(message: types.Message, state: FSMContext):
-    while not message.text.isdigit():
+    if message.text.isdigit():
+        last_product_id = await get_last_product_id_by_chat_id(config, message.chat.id)
+        await update_chat_every_hour(
+            config,
+            message.chat.id,
+            last_product_id[0],
+            message.text
+        )
+        await state.finish()
+        await message.answer("Спасибо, мы будем присылать Вам уведомления каждые " + message.text + " ч.",
+                             parse_mode=types.ParseMode.HTML)
+        name_product = await get_product_py_id(config, last_product_id[0])
+        mess = await get_product_prices_now([{0: str(message.chat.id), 1: str(last_product_id[0]), 2: name_product[0]}])
+        await message.answer(
+            "Текущие цены в магазинах: \n\n" + mess,
+            parse_mode=types.ParseMode.HTML)
+    else:
         await message.answer("<b>Колличество часов не является числом. Введите заново.</b>",
                              parse_mode=types.ParseMode.HTML)
         await state.finish()
         await Products.after_hours.set()
-    last_product_id = await get_last_product_id_by_chat_id(config, message.chat.id)
-    await update_chat_every_hour(
-        config,
-        message.chat.id,
-        last_product_id[0],
-        message.text
-    )
-    await state.finish()
-    await message.answer("Спасибо, мы будем присылать Вам уведомления каждые " + message.text + " ч.",
-                         parse_mode=types.ParseMode.HTML)
 
 
 @dp.message_handler(state=Products.low_price)
@@ -130,6 +157,14 @@ async def change_price_notification_set(call):
     await update_prod_notif_change(config, call.message.chat.id, last_product_id[0])
 
     notif_change_price = await find_notif_for_update_price(config, call.message.chat.id, last_product_id[0])
+    message = await get_product_prices_now(notif_change_price, True)
+
+    await call.message.answer(
+        "Спасибо, мы будем присылать Вам уведомления как только цена изменится. \n\nТекущие цены: \n" + message,
+        parse_mode=types.ParseMode.HTML)
+
+
+async def get_product_prices_now(notif_change_price, change_price=False):
     for notification in notif_change_price:
         with open(CONFIG_STORE_FILE, "r") as read_file:
             data_json = json.load(read_file)
@@ -139,12 +174,9 @@ async def change_price_notification_set(call):
                 data[StoreFields.URL] += quote(notification[2])
                 data_store = get_html(data, notification[2])
                 message = await create_store_message(data, data_store, message)
-                if len(data_store.price) > 0:
+                if change_price and len(data_store.price) > 0:
                     await update_last_price(config, notification[1], data[StoreFields.STORE], data_store.price)
-
-    await call.message.answer(
-        "Спасибо, мы будем присылать Вам уведомления как только цена изменится. \n\nТекущие цены: \n" + message,
-        parse_mode=types.ParseMode.HTML)
+    return message
 
 
 @dp.callback_query_handler(Text(startswith="change_"))
@@ -190,9 +222,6 @@ async def scheduler_products_every_hour():
 
             await bot.send_message(text=message,
                                    chat_id=notification[0],
-                                   reply_markup=get_keyboard([[Commands.EVERY_HOUR_PRICE, ProductKeys.EVERY],
-                                                              [Commands.CHANGE_PRICE, ProductKeys.CHANGE],
-                                                              [Commands.LOW_PRICE, ProductKeys.LOW]]),
                                    parse_mode=types.ParseMode.HTML)
             await update_last_notification_time(config, notification[0], notification[1])
         await asyncio.sleep(int(config['Message']['timeout']))
@@ -263,7 +292,7 @@ async def create_store_message(data, data_store, message):
                 message += "Нет в наличии"
             else:
                 message += data_store.name
-                message += "\n<b>Стоит: </b>" + data_store.price
+                message += "\n<b>Цена: </b>" + data_store.price
                 message += "\n<b>Ссылка: </b>" + data_store.link_url
     message += "\n\n"
     return message

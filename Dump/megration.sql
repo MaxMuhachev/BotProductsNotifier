@@ -48,7 +48,7 @@ CREATE TABLE `user_track`
     `chat_id`                   int      NOT NULL,
     `product_id`                int      NOT NULL,
     `date_updated`              DATETIME NOT NULL DEFAULT (now()) ON UPDATE now(),
-    `last_notification`         DATETIME          DEFAULT NULL,
+    `last_notification`         DATETIME          DEFAULT CURRENT_TIMESTAMP,
     `every_hour`                int               DEFAULT NULL,
     `notification_price_change` tinyint(1)        DEFAULT '0',
     `price_low`                 int               DEFAULT NULL,
